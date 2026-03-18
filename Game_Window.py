@@ -3,20 +3,21 @@ from sys import exit #terminate the program
 import os
 
 # Game variables
-GAME_WIDTH = 512
-GAME_HEIGHT = 512
+TILE_SIZE = 32
+GAME_WIDTH = 612
+GAME_HEIGHT = 612
 
-PLAYER_X = GAME_WIDTH / 2
-PLAYER_Y = GAME_HEIGHT / 2
+PLAYER_X = GAME_WIDTH / 2 # x location where the horse spawns when you run the game
+PLAYER_Y = GAME_HEIGHT / 2 # y location where the horse spawns when you run the game
 PLAYER_WIDTH = 108
 PLAYER_HEIGHT = 108
-PLAYER_JUMP_WIDTH = 52
-PLAYER_JUMP_HEIGHT = 60
+PLAYER_JUMP_WIDTH = 84
+PLAYER_JUMP_HEIGHT = 108
 PLAYER_DISTANCE = 5
 
 GRAVITY = 0.5
 PlAYER_VELOCITY_Y = -10
-FLOOR_Y = GAME_HEIGHT * 3/4
+
 
 #images
 def load_image(image_name, scale=None):
@@ -28,6 +29,9 @@ def load_image(image_name, scale=None):
 background_image = load_image("temp_background.png", (GAME_WIDTH, GAME_HEIGHT))
 player_image_right = load_image("Horse_Right.png", (PLAYER_WIDTH, PLAYER_HEIGHT))
 player_image_left = load_image("Horse_Left.png", (PLAYER_WIDTH, PLAYER_HEIGHT))
+player_image_jump_right= load_image("Horse_jump_right.png", (PLAYER_JUMP_WIDTH, PLAYER_JUMP_HEIGHT))
+player_image_jump_left= load_image("Horse_jump_left.png", (PLAYER_JUMP_WIDTH, PLAYER_JUMP_HEIGHT))
+floor_tile_image = load_image("floor-tile.png", (TILE_SIZE, TILE_SIZE))
 
 
 pygame.init()  # always needed to initialize py game
@@ -46,31 +50,91 @@ class Player(pygame.Rect):
         self.jumping = False
 
     def update_image(self):
-        if self.direction == "right":
-            self.image = player_image_right
-        if self.direction == "left":
-            self.image = player_image_left
+        if self.jumping:
+            self.width = PLAYER_JUMP_WIDTH
+            self.height = PLAYER_JUMP_HEIGHT
+            if self.direction == "right":
+                self.image = player_image_jump_right
+            elif self.direction == "left":
+                self.image = player_image_jump_left
+        else:
+            self.width = PLAYER_WIDTH
+            self.height = PLAYER_HEIGHT
+            if self.direction == "right":
+                self.image = player_image_right
+            if self.direction == "left":
+                self.image = player_image_left
 
 
 # left (x) and top (y), width and height
 player = Player()
 
-def move():
-    player.y += player.velocity_y # update the player's vertical position based on its velocity
-    player.velocity_y += GRAVITY # apply gravity to the player's vertical velocity
+class Tile(pygame.Rect):
+    def __init__(self, x, y, image):
+        pygame.Rect.__init__(self, x, y, TILE_SIZE, TILE_SIZE)
+        self.image = image
 
-    if player.y + player.height > FLOOR_Y:
-        player.y = FLOOR_Y - player.height
-        player.velocity_y = 0 # Stops falling when hit the floor
-        player.jumping = False
+def create_map():
+    # Floating platform
+    for i in range(4):
+        tile = Tile(player.x + i * TILE_SIZE, player.y + 2 * TILE_SIZE*2, floor_tile_image)
+        tiles.append(tile)
+
+    # Main floor
+    for i in range(20): # range to cover more width
+        tile = Tile(i*TILE_SIZE, GAME_HEIGHT - TILE_SIZE, floor_tile_image) # Fixed '-' to '='
+        tiles.append(tile)
+
+    # Vertical stack/wall
+    for i in range(3):
+        tile = Tile(TILE_SIZE*3, (i+10)*TILE_SIZE, floor_tile_image)
+        tiles.append(tile) 
+
+def check_tile_collision():
+    for tile in tiles:
+        if player.colliderect(tile):
+            return tile
+    return None
+
+def move():
+    # Apply Gravity
+    player.velocity_y += GRAVITY
+    player.y += player.velocity_y 
+
+    # Check for collisions with tiles
+    collided_tile = check_tile_collision()
+    if collided_tile:
+        # If falling downwards
+        if player.velocity_y > 0:
+            player.y = collided_tile.top - player.height
+            player.velocity_y = 0
+            player.jumping = False
+        # If jumping upwards (hitting head)
+        elif player.velocity_y < 0:
+            player.y = collided_tile.bottom
+            player.velocity_y = 0
 
 
 def draw():
     # window.fill('blue') # fill the window with blue color
     window.fill((0,0,0)) # fill the window with a custom color using RGB values
     window.blit(background_image, (0,0)) # draw the background image on the window at position (0,80)
+    
+    for tile in tiles:
+        window.blit(tile.image, tile)
+    
     player.update_image()
     window.blit(player.image, player) # draw the player image on the window at the player's position
+
+
+# start game
+# player = Player()
+tiles= []
+create_map()
+
+
+
+
 
 while True: #game loop
     for event in pygame.event.get():
