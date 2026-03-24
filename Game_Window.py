@@ -11,12 +11,13 @@ PLAYER_X = GAME_WIDTH / 2 # x location where the horse spawns when you run the g
 PLAYER_Y = GAME_HEIGHT / 2 # y location where the horse spawns when you run the game
 PLAYER_WIDTH = 108
 PLAYER_HEIGHT = 108
-PLAYER_JUMP_WIDTH = 84
+PLAYER_JUMP_WIDTH = 108
 PLAYER_JUMP_HEIGHT = 108
 PLAYER_DISTANCE = 5
 
 GRAVITY = 0.5
 PlAYER_VELOCITY_Y = -10
+PLAYER_VELOCITY_X = 5
 
 
 #images
@@ -31,7 +32,7 @@ player_image_right = load_image("Horse_Right.png", (PLAYER_WIDTH, PLAYER_HEIGHT)
 player_image_left = load_image("Horse_Left.png", (PLAYER_WIDTH, PLAYER_HEIGHT))
 player_image_jump_right= load_image("Horse_jump_right.png", (PLAYER_JUMP_WIDTH, PLAYER_JUMP_HEIGHT))
 player_image_jump_left= load_image("Horse_jump_left.png", (PLAYER_JUMP_WIDTH, PLAYER_JUMP_HEIGHT))
-floor_tile_image = load_image("floor-tile.png", (TILE_SIZE, TILE_SIZE))
+floor_tile_image = load_image("floor-tile2.png", (TILE_SIZE, TILE_SIZE))
 
 
 pygame.init()  # always needed to initialize py game
@@ -51,15 +52,15 @@ class Player(pygame.Rect):
 
     def update_image(self):
         if self.jumping:
-            self.width = PLAYER_JUMP_WIDTH
-            self.height = PLAYER_JUMP_HEIGHT
+            # self.width = PLAYER_JUMP_WIDTH
+            # self.height = PLAYER_JUMP_HEIGHT
             if self.direction == "right":
                 self.image = player_image_jump_right
             elif self.direction == "left":
                 self.image = player_image_jump_left
         else:
-            self.width = PLAYER_WIDTH
-            self.height = PLAYER_HEIGHT
+            # self.width = PLAYER_WIDTH
+            # self.height = PLAYER_HEIGHT
             if self.direction == "right":
                 self.image = player_image_right
             if self.direction == "left":
@@ -76,12 +77,12 @@ class Tile(pygame.Rect):
 
 def create_map():
     # Floating platform
-    for i in range(4):
+    for i in range(6):
         tile = Tile(player.x + i * TILE_SIZE, player.y + 2 * TILE_SIZE*2, floor_tile_image)
         tiles.append(tile)
 
     # Main floor
-    for i in range(20): # range to cover more width
+    for i in range(50): # range to cover more width
         tile = Tile(i*TILE_SIZE, GAME_HEIGHT - TILE_SIZE, floor_tile_image) # Fixed '-' to '='
         tiles.append(tile)
 
@@ -96,10 +97,45 @@ def check_tile_collision():
             return tile
     return None
 
+# def check_tile_collision_x():
+#     tile = check_tile_collision()
+#     if tile is not None:
+#         if player.velocity_x < 0:
+#             player.x = tile.x + tile.width
+#         elif player.velocity_x > 0:
+#             player.x = tile.x - player.width
+#         player.velocity_x = 0
+
+# def check_tile_collision_y():
+#     tile = check_tile_collision()
+#     if tile is not None:
+#         if player.velocity_y < 0:
+#             player.y = tile.y + tile.height
+#         elif player.velocity_y > 0:
+#             player.y = tile.y - player.height
+#             player.jumping = False
+#         player.velocity_y = 0
+        
+
+def move_player_x(velocity_x):
+    move_map_x(velocity_x)
+
+def move_map_x(velocity_x):
+    for tile in tiles:
+        tile.x += velocity_x
+
+
+
 def move():
-    # Apply Gravity
-    player.velocity_y += GRAVITY
+    # x movement
+    # check_tile_collision_x()
+
+
+    # y movment
+    player.velocity_y += GRAVITY #apply gravity
     player.y += player.velocity_y 
+
+    # check_tile_collision_y()
 
     # Check for collisions with tiles
     collided_tile = check_tile_collision()
@@ -144,11 +180,13 @@ while True: #game loop
 
     keys = pygame.key.get_pressed() # get the state of all keyboard buttons
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        player.x = max(player.x - PLAYER_DISTANCE, 0) # move the player left by 5 pixels, but not beyond the left edge of the window 
+        # player.x = max(player.x - PLAYER_DISTANCE, 0) # move the player left by 5 pixels, but not beyond the left edge of the window 
+        move_player_x(PLAYER_VELOCITY_X)
         player.direction = "left"
 
     if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        player.x = min(player.x + PLAYER_DISTANCE, GAME_WIDTH - player.width) # move the player right by 5 pixels, but not beyond the right edge of the window
+        # player.x = min(player.x + PLAYER_DISTANCE, GAME_WIDTH - player.width) # move the player right by 5 pixels, but not beyond the right edge of the window
+        move_player_x(-PLAYER_VELOCITY_X)
         player.direction = "right"
 
     if (keys[pygame.K_UP] or keys[pygame.K_w]) and not player.jumping:
