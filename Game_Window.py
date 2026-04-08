@@ -125,13 +125,12 @@ def move_map_x(velocity_x):
         tile.x += velocity_x
 
 
-
 def move():
     # x movement
     # check_tile_collision_x()
 
 
-    # y movment
+    # y movement
     player.velocity_y += GRAVITY #apply gravity
     player.y += player.velocity_y 
 
@@ -167,9 +166,6 @@ def draw():
 # player = Player()
 tiles= []
 create_map()
-
-
-
 
 
 while True: #game loop
